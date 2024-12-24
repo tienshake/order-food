@@ -3,9 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
-use App\Filament\Resources\OrderResource\RelationManagers;
-use App\Filament\Resources\OrderResource\RelationManagers\AddressRelationManager;
-use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
 use Faker\Provider\ar_EG\Text;
@@ -28,6 +25,7 @@ use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Number;
 
@@ -42,22 +40,7 @@ class OrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name'),
-                Forms\Components\TextInput::make('total_amount')
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'completed' => 'Completed',
-                        'cancelled' => 'Cancelled'
-                    ]),
-                Forms\Components\Textarea::make('note'),
-                Forms\Components\DateTimePicker::make('order_date')
-            ]);
+            ->schema([]);
     }
 
     public static function table(Table $table): Table
@@ -79,11 +62,12 @@ class OrderResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ]),
+                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\ActionGroup::make([
+                //     Tables\Actions\EditAction::make(),
+                //     Tables\Actions\ViewAction::make(),
+                //     Tables\Actions\DeleteAction::make(),
+                // ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -94,9 +78,18 @@ class OrderResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            AddressRelationManager::class
-        ];
+        return [];
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
     }
 
     public static function getNavigationBadge(): ?string

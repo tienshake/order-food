@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    public function store(Request $request)
+    public function index(Request $request)
     {
         $validated = $request->validate([
             'products' => 'required|array',

@@ -15,7 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
     Route::get('categories/{category}/products', [CategoryController::class, 'products']);
-    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+    Route::apiResource('orders', OrderController::class)->only(['index']);
 });
 
 // Route::post('logout', [AuthController::class, 'logout']);
