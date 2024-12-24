@@ -40,34 +40,133 @@ class OrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([]);
-    }
+            ->schema([
+                Group::make()
+                    ->schema([
+                        Section::make()
+                            ->schema([
 
+                                Hidden::make('user_id')
+                                    ->default(fn() => \Illuminate\Support\Facades\Auth::id()),
+
+                                TextInput::make('user_name')
+                                    ->default(fn() => \Illuminate\Support\Facades\Auth::user()->name)
+                                    ->label('Customer')
+                                    ->disabled()
+                                    ->dehydrated(),
+
+                                Select::make('status')
+                                    ->options([
+                                        'pending' => 'Pending',
+                                        'processing' => 'Processing',
+                                        'completed' => 'Completed',
+                                        'cancelled' => 'Cancelled',
+                                    ])
+                                    ->required(),
+
+                                TextInput::make('total_amount')
+                                    ->prefix('$')
+                                    ->afterStateUpdated(function (Get $get, Set $set) {
+                                        $total = 0;
+                                        foreach ($get('orderDetails') as $item) {
+                                            $total += $item['price'] * $item['quantity'];
+                                        }
+                                        $set('total_amount', $total);
+                                    })
+                                    ->disabled()
+                                    ->dehydrated(),
+
+                                TextInput::make('order_date')
+                                    ->type('datetime-local')
+                                    ->default(now()),
+
+
+                            ])
+                            ->columns(2),
+
+                        Section::make('Order Items')
+                            ->schema([
+                                Repeater::make('orderDetails')
+                                    ->relationship()
+                                    ->schema([
+                                        Select::make('product_id')
+                                            ->relationship('product', 'name')
+                                            ->preload()
+                                            ->searchable()
+                                            ->required()
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($state) {
+                                                    $product = Product::find($state);
+                                                    $set('price', $product?->price);
+
+                                                    $total = collect($get('orderDetails') ?? [])->reduce(function ($total, $item) {
+                                                        return $total + ($item['price'] * ($item['quantity'] ?? 1));
+                                                    }, 0);
+                                                    $set('total_amount', $total);
+                                                }
+                                            }),
+
+                                        TextInput::make('quantity')
+                                            ->numeric()
+                                            ->default(1)
+                                            ->required()
+                                            ->minValue(1)
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $livewire) {
+                                                // Set total cho item hiện tại
+                                                $currentPrice = $get('price');
+                                                if ($currentPrice) {
+                                                    $total = $currentPrice * $state;
+                                                    $set('price', $total);
+                                                }
+
+                                                // Tính tổng
+                                                $total = collect($livewire->data['orderDetails'])->sum(
+                                                    fn($item) =>
+                                                    $item['price'] * $item['quantity']
+                                                );
+                                                $livewire->data['total_amount'] = $total;
+                                            }),
+
+                                        TextInput::make('price')
+                                            ->numeric()
+                                            ->prefix('$')
+                                            ->disabled()
+                                            ->dehydrated()
+                                    ])
+                                    ->columns(3)
+                            ])
+                    ])
+                    ->columnSpan(['lg' => 2]),
+            ]);
+    }
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')->money(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'danger' => 'cancelled',
-                        'warning' => 'pending',
-                        'primary' => 'processing',
-                        'success' => 'completed',
+                Tables\Columns\SelectColumn::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'processing' => 'Processing',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
                     ]),
+
                 Tables\Columns\TextColumn::make('order_date')->dateTime()
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                // Tables\Actions\ActionGroup::make([
-                //     Tables\Actions\EditAction::make(),
-                //     Tables\Actions\ViewAction::make(),
-                //     Tables\Actions\DeleteAction::make(),
-                // ]),
+                // Tables\Actions\ViewAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -81,16 +180,16 @@ class OrderResource extends Resource
         return [];
     }
 
-    public static function canCreate(): bool
-    {
-        return false;
-    }
+    // public static function canCreate(): bool
+    // {
+    //     return false;
+    // }
 
 
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-    }
+    // public static function canEdit(Model $record): bool
+    // {
+    //     return false;
+    // }
 
     public static function getNavigationBadge(): ?string
     {

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'products' => 'required|array',
@@ -20,19 +20,23 @@ class OrderController extends Controller
             'products.*.quantity' => 'required|integer|min:1'
         ]);
 
-        $order = DB::transaction(function () use ($validated) {
+        $total = 0;
+        foreach ($validated['products'] as $item) {
+            $product = Product::find($item['product_id']);
+            $total += $product->price * $item['quantity'];
+        }
+
+        $order = DB::transaction(function () use ($validated, $total) {
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'status' => 'pending',
-                'order_date' => now()
+                'order_date' => now(),
+                'total_amount' => $total
             ]);
 
-            $total = 0;
+            // Tạo order details
             foreach ($validated['products'] as $item) {
                 $product = Product::find($item['product_id']);
-                $price = $product->price * $item['quantity'];
-                $total += $price;
-
                 $order->orderDetails()->create([
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
@@ -40,7 +44,6 @@ class OrderController extends Controller
                 ]);
             }
 
-            $order->update(['total_amount' => $total]);
             return $order;
         });
 

@@ -23,8 +23,8 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationGroup = 'User Management'; 
-    
+    protected static ?string $navigationGroup = 'User Management';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -47,6 +47,16 @@ class UserResource extends Resource
                     ->required(fn(string $context): bool => $context === 'create')
                     ->maxLength(255)
                     ->revealable(),
+
+                Forms\Components\Select::make('role')
+                    ->label('Role')
+                    ->options([
+                        'admin' => 'Admin',
+                        'customer' => 'Customer',
+                        'staff' => 'Staff',
+                    ])
+                    ->required()
+                    ->default('user'),
             ]);
     }
 
@@ -58,6 +68,12 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
+                Tables\Columns\BadgeColumn::make('role')
+                    ->label('Role')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
