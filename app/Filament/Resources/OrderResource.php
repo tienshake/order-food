@@ -37,7 +37,7 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?int $navigationSort = 4;
-    protected static ?string $navigationGroup = 'Order Management'; 
+    protected static ?string $navigationGroup = 'Order Management';
 
     public static function form(Form $form): Form
     {
@@ -47,8 +47,7 @@ class OrderResource extends Resource
                     ->relationship('user', 'name'),
                 Forms\Components\TextInput::make('total_amount')
                     ->numeric()
-                    ->prefix('$')
-                    ->disabled(),
+                    ->prefix('$'),
                 Forms\Components\Select::make('status')
                     ->options([
                         'pending' => 'Pending',
