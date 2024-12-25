@@ -66,15 +66,15 @@ class OrderResource extends Resource
 
                                 TextInput::make('total_amount')
                                     ->prefix('$')
-                                    ->afterStateUpdated(function (Get $get, Set $set) {
-                                        $total = 0;
-                                        foreach ($get('orderDetails') as $item) {
-                                            $total += $item['price'] * $item['quantity'];
-                                        }
-                                        $set('total_amount', $total);
+                                    ->default(function (Get $get) {
+                                        return collect($get('orderDetails') ?? [])->reduce(function ($total, $item) {
+                                            return $total + ($item['price'] * ($item['quantity'] ?? 1));
+                                        }, 0);
                                     })
                                     ->disabled()
-                                    ->dehydrated(),
+                                    ->dehydrated()
+                                    ->live()
+                                    ->reactive(),
 
                                 TextInput::make('order_date')
                                     ->type('datetime-local')
@@ -98,10 +98,11 @@ class OrderResource extends Resource
                                             ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                                 if ($state) {
                                                     $product = Product::find($state);
-                                                    $set('price', $product?->price);
+                                                    $quantity = $get('quantity') ?? 1;
+                                                    $set('price', $product?->price * $quantity);
 
                                                     $total = collect($get('orderDetails') ?? [])->reduce(function ($total, $item) {
-                                                        return $total + ($item['price'] * ($item['quantity'] ?? 1));
+                                                        return $total + ($item['price']);
                                                     }, 0);
                                                     $set('total_amount', $total);
                                                 }
@@ -113,20 +114,16 @@ class OrderResource extends Resource
                                             ->required()
                                             ->minValue(1)
                                             ->reactive()
-                                            ->afterStateUpdated(function ($state, Set $set, Get $get, $livewire) {
-                                                // Set total cho item hiện tại
-                                                $currentPrice = $get('price');
-                                                if ($currentPrice) {
-                                                    $total = $currentPrice * $state;
-                                                    $set('price', $total);
-                                                }
+                                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                                if ($get('product_id')) {
+                                                    $product = Product::find($get('product_id'));
+                                                    $set('price', $product?->price * $state);
 
-                                                // Tính tổng
-                                                $total = collect($livewire->data['orderDetails'])->sum(
-                                                    fn($item) =>
-                                                    $item['price'] * $item['quantity']
-                                                );
-                                                $livewire->data['total_amount'] = $total;
+                                                    $total = collect($get('orderDetails') ?? [])->reduce(function ($total, $item) {
+                                                        return $total + ($item['price']);
+                                                    }, 0);
+                                                    $set('total_amount', $total);
+                                                }
                                             }),
 
                                         TextInput::make('price')
