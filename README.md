@@ -12,8 +12,8 @@ A web application built with Laravel v11.36.1 and Filament v3.2.
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/tienshake/inventory-management-system
-cd inventory-management-system
+git clone https://github.com/tienshake/order-food
+cd order-food
 ```
 
 2. **Install PHP dependencies**
