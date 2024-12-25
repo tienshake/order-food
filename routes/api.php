@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
+Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+Route::get('categories/{category}/products', [CategoryController::class, 'products']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
-    Route::apiResource('products', ProductController::class)->only(['index', 'show']);
-    Route::get('categories/{category}/products', [CategoryController::class, 'products']);
+    // Route::post('logout', [AuthController::class, 'logout']);
     Route::apiResource('orders', OrderController::class)->only(['store', 'index']);
 });
