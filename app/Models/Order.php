@@ -14,7 +14,10 @@ class Order extends Model
         'total_amount',
         'status',
         'note',
-        'order_date'
+        'order_date',
+        'payment_intent_id',
+        'paid_at',
+        'session_id'
     ];
 
     public function user()
