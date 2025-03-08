@@ -2,6 +2,7 @@
 
 A web application built with Laravel v11.36.1 and Filament v3.2.
 
+
 ## Requirements
 - PHP >= 8.2.12
 - Composer
